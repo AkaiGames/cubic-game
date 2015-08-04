@@ -10,8 +10,8 @@ SimpleGameLayer::SimpleGameLayer()
 
 SimpleGameLayer::~SimpleGameLayer()
 {
-    labelTime->release();
-    scoreLabel->release();
+    _labelTime->release();
+    _scoreLabel->release();
 }
 
 Scene* SimpleGameLayer::createScene()
@@ -63,37 +63,37 @@ void SimpleGameLayer::setupHUD()
     
     TTFConfig ttfConfig("fonts/larabiefontrg.ttf", visibleSize.width/12);
 
-    labelTime = Label::createWithTTF(ttfConfig,"00:00");
-    labelTime->setColor(Color3B(0x74, 0x74, 0x74));
-    labelTime->setAnchorPoint(Vec2(0.5,0.5));
+    _labelTime = Label::createWithTTF(ttfConfig,"00:00");
+    _labelTime->setColor(Color3B(0x74, 0x74, 0x74));
+    _labelTime->setAnchorPoint(Vec2(0.5,0.5));
     
-    float v_spacing = visibleSize.height - labelTime->getContentSize().height/1.5;
+    float v_spacing = visibleSize.height - _labelTime->getContentSize().height/1.5;
     
-    labelTime->setPosition(Vec2(labelTime->getContentSize().width / 1.5 + clockSprite->getBoundingBox().size.width/2 + 10, 
+    _labelTime->setPosition(Vec2(_labelTime->getContentSize().width / 1.5 + clockSprite->getBoundingBox().size.width/2 + 10, 
                                 v_spacing));
-    labelTime->retain();
+    _labelTime->retain();
     
-    addChild(labelTime);
+    addChild(_labelTime);
     
     int spacing = 0;
     
-    scoreLabel = Label::createWithTTF(ttfConfig,"SCORE: 0");
-    scoreLabel->setColor(Color3B(0x74, 0x74, 0x74));
-    scoreLabel->setAnchorPoint(Vec2(0,1));
-    scoreLabel->setPosition(Vec2(SPACING, 
+    _scoreLabel = Label::createWithTTF(ttfConfig,"SCORE: 0");
+    _scoreLabel->setColor(Color3B(0x74, 0x74, 0x74));
+    _scoreLabel->setAnchorPoint(Vec2(0,1));
+    _scoreLabel->setPosition(Vec2(SPACING, 
                                 v_spacing));
-    spacing = scoreLabel->getBoundingBox().size.height/2 + visibleSize.height / 20.0;
+    spacing = _scoreLabel->getBoundingBox().size.height/2 + visibleSize.height / 20.0;
     
-    v_spacing = scoreLabel->getContentSize().height/1.5;
+    v_spacing = _scoreLabel->getContentSize().height/1.5;
     
-    scoreLabel->setPosition(Vec2(SPACING, 
+    _scoreLabel->setPosition(Vec2(SPACING, 
                                  spacing));
     
-    scoreLabel->retain();
+    _scoreLabel->retain();
     
-    addChild(scoreLabel);
+    addChild(_scoreLabel);
     
-    spacing += scoreLabel->getContentSize().height;
+    spacing += _scoreLabel->getContentSize().height;
     
     auto levelLabel = Label::createWithTTF(ttfConfig, "LEVEL: 01");
     levelLabel->setColor(Color3B(0x74, 0x74, 0x74));
@@ -109,13 +109,14 @@ void SimpleGameLayer::setupHUD()
 void SimpleGameLayer::setupGame()
 {
     _secs = _mins = 0;
-    running = false;
-    level = 1;
-    lines = 4;
-    columns = 3;
-    cubics = 0;
-    score = 0;
+    _running = false;
+    _level = 1;
+    _lines = 4;
+    _columns = 3;
+    _cubics = 0;
+    _score = 0;
     _currentTouchID = -1;
+    _correctSets = 0;
     
     auto keyListener = EventListenerKeyboard::create();
     keyListener->onKeyReleased = [=](EventKeyboard::KeyCode keyCode, Event* event) {
@@ -135,30 +136,28 @@ void SimpleGameLayer::setupGame()
 void SimpleGameLayer::onKeyReleased(EventKeyboard::KeyCode keyCode, Event* event)
 {
     cocos2d::Layer::onKeyReleased(keyCode, event);
-    
-    
 }
 
 
 void SimpleGameLayer::buildSquareBoard()
 {
     float v_spacing = Director::getInstance()->getVisibleSize().height - 
-                            labelTime->getContentSize().height/1.5;
+                            _labelTime->getContentSize().height/1.5;
     int l=0, c=0;
-    cubics = (lines*columns) / 2;
-    totalTries = totalCorrect = 0;
+    _cubics = (_lines*_columns) / 2;
+    _totalTries = _totalCorrect = 0;
     
     // [[-- Marca os tiles que o player deve lembrar e clicar depois
     
-    targets.clear();
+    _targets.clear();
     
-    for( int i = 0; i < cubics; i++ ) {
+    for( int i = 0; i < _cubics; i++ ) {
         while ( true ) {
-            l = rand() % lines,
-            c = rand() % columns;
-            if ( std::find(targets.begin(), targets.end(), (l * lines + c) ) != targets.end() )
+            l = rand() % _lines,
+            c = rand() % _columns;
+            if ( std::find(_targets.begin(), _targets.end(), (l * _lines + c) ) != _targets.end() )
                 continue;
-            targets.push_back(l * lines + c);
+            _targets.push_back(l * _lines + c);
             break;
         }
     }
@@ -167,8 +166,8 @@ void SimpleGameLayer::buildSquareBoard()
     
     // [[-- De acordo com o número de colunas e linhas, pre-calcula o tamanho dos tiles
     
-    v_spacing -= labelTime->getContentSize().height/1.5;
-    int pre_calc_square_size = (Director::getInstance()->getVisibleSize().width - (columns+1)*SPACING) / columns;
+    v_spacing -= _labelTime->getContentSize().height/1.5;
+    int pre_calc_square_size = (Director::getInstance()->getVisibleSize().width - (_columns+1)*SPACING) / _columns;
     
     // --]]
     
@@ -177,10 +176,10 @@ void SimpleGameLayer::buildSquareBoard()
     auto touchListener = EventListenerTouchOneByOne::create();
     touchListener->setSwallowTouches( true );
     touchListener->onTouchBegan = [=](Touch* touch, Event* event) {
-        if ( running == false ) return false;
+        if ( _running == false ) return false;
         
         // we've already spent all our tries.
-        if ( totalTries >= cubics ) {
+        if ( _totalTries >= _cubics ) {
             log("No more clicking!");
             return false;
         }
@@ -228,30 +227,35 @@ void SimpleGameLayer::buildSquareBoard()
         if (rect.containsPoint(touch->getLocation())) {
             
             auto callback_before = CallFunc::create([=](){
-                totalTries+=1;
+                _totalTries+=1;
                 
                 if ( target->getZOrder() == 3 ) { // touched correct tile
-                    hiddenCorrectTilesLeft.remove( target->getName() ); // removes the correct tile
-                    totalCorrect+=1;
-                    score += (totalCorrect * level) / (_secs ? _secs : 1);
+                    _hiddenCorrectTilesLeft.remove( target->getName() ); // removes the correct tile
+                    _totalCorrect+=1;
+                    _score += (_totalCorrect * _level) / (_secs ? _secs : 1);
                 } else { // touched wrong tile
-                    score -= ((totalTries - totalCorrect) * level) * (_secs ? _secs : 1);
+                    _score -= ((_totalTries - _totalCorrect) * _level) * (_secs ? _secs : 1);
                 }
                 
                 std::stringstream stream;
-                stream << "SCORE: " << score;
-                scoreLabel->setString(stream.str().c_str());
+                stream << "SCORE: " << _score;
+                _scoreLabel->setString(stream.str().c_str());
             });
             auto fadeIn = FadeIn::create(0.0f);
             auto callback_after = CallFunc::create([=](){
                 
-                if ( totalTries == cubics ) {
-                    running = false;
-                    timer.pause();
+                if ( _totalTries == _cubics ) {
+                    
+                    if ( _totalCorrect == _totalTries ) { // perfect
+                        _correctSets += 1;
+                    }
+                    
+                    _running = false;
+                    _timer.pause();
                     
                     Label* label = nullptr;
                     
-                    if ( totalCorrect == cubics ) {
+                    if ( _totalCorrect == _cubics ) {
                         label = Label::createWithTTF("YOU WON", "fonts/monofonto.ttf", 
                                                       Director::getInstance()->getVisibleSize().width / 5);
                         label->setColor(Color3B(0x42, 0x80, 0xb8));
@@ -267,14 +271,14 @@ void SimpleGameLayer::buildSquareBoard()
                                  Director::getInstance()->getVisibleSize().height / 2 + Director::getInstance()->getVisibleOrigin().y ) );
                     label->setOpacity(0);
                     
-                    bool perfect = hiddenCorrectTilesLeft.empty() ? true : false;
+                    bool perfect = _hiddenCorrectTilesLeft.empty() ? true : false;
                     
                     //auto fade = FadeIn::create(1.f);
                     //auto delay = DelayTime::create(1.0f);
                     auto revealCorrectsCallback = CallFunc::create([=](){
-                        while ( hiddenCorrectTilesLeft.empty() == false ) {
-                            std::string tileName = hiddenCorrectTilesLeft.front();
-                            hiddenCorrectTilesLeft.pop_front();
+                        while ( _hiddenCorrectTilesLeft.empty() == false ) {
+                            std::string tileName = _hiddenCorrectTilesLeft.front();
+                            _hiddenCorrectTilesLeft.pop_front();
                             auto fadeIn = FadeTo::create(0.5f, 128);
                             auto delay = DelayTime::create(2.0f);
                             auto fadeOut = FadeOut::create(0.5f);
@@ -318,9 +322,9 @@ void SimpleGameLayer::buildSquareBoard()
     
     // [[-- Criação dos tiles
     
-    for ( int i = 0; i < lines; i++ )
+    for ( int i = 0; i < _lines; i++ )
     {
-        for( int j = 0; j < columns; j++ )
+        for( int j = 0; j < _columns; j++ )
         {
             int zOrder = 0;
             Sprite* square = Sprite::create("tile-off.png");
@@ -332,12 +336,18 @@ void SimpleGameLayer::buildSquareBoard()
             square->setPosition( ((j+1)*SPACING) + (j*pre_calc_square_size), 
                                   v_spacing); 
             
-            iter = std::find(targets.begin(), targets.end(), (i * lines + j) );
+            square->setOpacity(0);
+            auto delay_before_normal = DelayTime::create(0.2f + ((rand() % 30))/100.0 );
+            auto fadeIn_normal = FadeIn::create(0.5f);
+            auto seq_normal = Sequence::create(delay_before_normal, fadeIn_normal, nullptr);
+            square->runAction(seq_normal);
+            
+            iter = std::find(_targets.begin(), _targets.end(), (i * _lines + j) );
             
             Sprite* new_tile = nullptr;
             
-            if ( iter != targets.end() ) {
-                targets.erase(iter);
+            if ( iter != _targets.end() ) {
+                _targets.erase(iter);
                 new_tile = Sprite::create("tile-on.png");
                 zOrder = 3;
                 new_tile->setOpacity(0);
@@ -346,8 +356,8 @@ void SimpleGameLayer::buildSquareBoard()
                 auto delay_middle = DelayTime::create(1.5f);
                 auto fadeOut = FadeOut::create(1.0f);
                 auto startCallback = CallFunc::create([=](){
-                    running = true;
-                    timer.start();
+                    _running = true;
+                    _timer.start();
                 });
                 auto seq = Sequence::create(delay_before, fadeIn, delay_middle, fadeOut, startCallback, nullptr);
                 new_tile->runAction(seq);
@@ -364,7 +374,7 @@ void SimpleGameLayer::buildSquareBoard()
             new_tile->setName(stream.str().c_str());
             
             if ( zOrder == 3 ) { // if it's a correct tile, adds it to the list of hidden correc tiles
-                hiddenCorrectTilesLeft.push_back( stream.str() );
+                _hiddenCorrectTilesLeft.push_back( stream.str() );
             }
             
             new_tile->setScale(square->getScale());
@@ -388,33 +398,49 @@ void SimpleGameLayer::buildSquareBoard()
 
 void SimpleGameLayer::prepareForNextLevel()
 {
-    timer.stop();
+    _timer.stop();
     // reset time
-    labelTime->setString("00:00");
+    _labelTime->setString("00:00");
     _secs = _mins = 0;
     
-    for ( int i = 0; i < lines; i++ )
+    for ( int i = 0; i < _lines; i++ )
     {
-        for( int j = 0; j < columns; j++ )
+        for( int j = 0; j < _columns; j++ )
         {   
             std::stringstream stream;
             stream << "over-" << i << "." << j;
             auto sprite_over = getChildByName(stream.str().c_str());
             
-            auto fadeOut = FadeOut::create(0.5f);
-            auto delay = DelayTime::create(1.5f);
-            auto removeCallback = CallFunc::create([=](){
-                sprite_over->removeFromParentAndCleanup(true);
-            });
-            auto seq = Sequence::create(fadeOut, delay, removeCallback, nullptr);
-            sprite_over->runAction(seq);
-            
-            
             stream.str("");
             stream.clear();
             stream << i << "." << j;
-            getChildByName(stream.str().c_str())->removeFromParentAndCleanup(true);
+            auto sprite_normal = getChildByName(stream.str().c_str());
+            
+            auto fadeOut = FadeOut::create(0.5f);
+            auto delay = DelayTime::create(0.0f);
+            auto removeCallback = CallFunc::create([=](){
+                sprite_over->removeFromParentAndCleanup(true);
+            });
+            
+            auto seq = Sequence::create(fadeOut, delay, removeCallback, nullptr);
+            sprite_over->runAction(seq);
+            
+            auto fadeOut2 = FadeOut::create(0.5f);
+            auto delay2 = DelayTime::create(0.0f);
+            auto removeCallback2 = CallFunc::create([=](){
+                sprite_normal->removeFromParentAndCleanup(true);
+            });
+            
+            auto seq2 = Sequence::create(fadeOut2, delay2, removeCallback2, nullptr);
+            sprite_normal->runAction(seq2);
         }
+    }
+    
+    if ( _correctSets >= TO_NEXT_LEVEL ) {
+        _level += 1;
+        _lines += 1;
+        _columns += 1;
+        _correctSets = 0;
     }
 }
 
@@ -422,12 +448,12 @@ void SimpleGameLayer::update(float dt)
 {
     cocos2d::Node::update(dt);
     
-    timer.tick(dt);
+    _timer.tick(dt);
     
-    if (timer.getSeconds() >= _secs || (timer.getSeconds() == 0 && _secs == 59)) {
+    if (_timer.getSeconds() >= _secs || (_timer.getSeconds() == 0 && _secs == 59)) {
         
-        _secs = timer.getSeconds();
-        _mins = timer.getMinutes();
+        _secs = _timer.getSeconds();
+        _mins = _timer.getMinutes();
         
         std::stringstream stream;
         
@@ -439,6 +465,6 @@ void SimpleGameLayer::update(float dt)
         if ( _secs < 10 ) stream << "0";
         stream << _secs;
         
-        labelTime->setString(stream.str().c_str());
+        _labelTime->setString(stream.str().c_str());
     }
 }
