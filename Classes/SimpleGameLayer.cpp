@@ -337,7 +337,7 @@ void SimpleGameLayer::buildSquareBoard()
                                   v_spacing); 
             
             square->setOpacity(0);
-            auto delay_before_normal = DelayTime::create(0.2f + ((rand() % 30))/100.0 );
+            auto delay_before_normal = DelayTime::create(0.2f + ((rand() % 50))/100.0 );
             auto fadeIn_normal = FadeIn::create(0.5f);
             auto seq_normal = Sequence::create(delay_before_normal, fadeIn_normal, nullptr);
             square->runAction(seq_normal);
