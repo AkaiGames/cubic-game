@@ -391,7 +391,7 @@ void SimpleGameLayer::buildSquareBoard()
                 auto delay_before = DelayTime::create(1.5f);
                 auto fadeIn = FadeIn::create(1.0f);
                 auto delay_middle = DelayTime::create(1.5f);
-                auto fadeOut = FadeOut::create(1.0f);
+                auto fadeOut = FadeOut::create(0.2f);
                 auto startCallback = CallFunc::create([=](){
                     _running = true;
                     _timer.start();

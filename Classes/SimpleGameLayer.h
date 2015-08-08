@@ -13,7 +13,7 @@ class SimpleGameLayer : public cocos2d::LayerColor
 {
 private:
     const int SPACING = 10;
-    const int TO_NEXT_LEVEL = 1; // amounth of correct sets needed level up
+    const int TO_NEXT_LEVEL = 10; // amounth of correct sets needed level up
     std::list< std::string > _hiddenCorrectTilesLeft;
     int _correctSets;
 
