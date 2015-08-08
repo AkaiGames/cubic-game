@@ -90,7 +90,7 @@ void SimpleGameLayer::setupHUD()
     verts[1] = Vec2(0,_labelTime->getContentSize().height * 1.5);
     verts[2] = Vec2(visibleSize.width*2, _labelTime->getContentSize().height * 1.5);
     verts[3] = Vec2(visibleSize.width*2,0);
-    bgBar1->drawSolidPoly(verts, 4, Color4F(0x74/255.0, 0x74/255.0, 0xFF/255.0, 1.0f));
+    bgBar1->drawSolidPoly(verts, 4, Color4F(0x6E/255.0, 0x83/255.0, 0xF2/255.0, 1.0f));
     addChild(bgBar1);
     
     // --]]
@@ -100,14 +100,14 @@ void SimpleGameLayer::setupHUD()
     h_spacing = visibleSize.width - (visibleSize.width / 30)*2;
     _life_square_scale_ratio = (bgBar1->getContentSize().height / 4) / bgBar1->getContentSize().height;
     
-    for( int i = MAX_LIVES; i > 0; i-- ) {
+    for( int i = 1; i <= MAX_LIVES; i++ ) {
         auto life = Sprite::create("tile-bg.png");
         life->setOpacity(0);
         life->setScale( _life_square_scale_ratio );
         life->setPosition( Vec2( h_spacing, v_spacing ) );
         addChild(life, 1);
         
-        auto fadeIn = FadeIn::create(0.2f);
+        auto fadeIn = FadeIn::create(1.0f);
         life->runAction(fadeIn);
         
         std::stringstream stream;
@@ -115,6 +115,7 @@ void SimpleGameLayer::setupHUD()
         life->setName( stream.str() );
         
         _lives.push( stream.str() );
+        log("Push life: %s", stream.str().c_str());
         
         h_spacing -= (life->getBoundingBox().size.width + (visibleSize.width / 30));
     }
@@ -126,8 +127,9 @@ void SimpleGameLayer::setupHUD()
     int spacing = _scoreLabel->getBoundingBox().size.height/2;
     
     _scoreLabel->setTextColor(Color4B(0xE9, 0xE9, 0xE9, 0xFF));
-    _scoreLabel->setAnchorPoint(Vec2(0.5,0.5));
-    _scoreLabel->setPosition(Vec2(_scoreLabel->getContentSize().width / 2 + visibleSize.width / 30, 
+    _scoreLabel->setAnchorPoint(Vec2(0,0.5));
+    _scoreLabel->setAlignment(TextHAlignment::LEFT);
+    _scoreLabel->setPosition(Vec2(visibleSize.width / 30, 
                                 spacing));
     
     _scoreLabel->retain();
@@ -143,15 +145,17 @@ void SimpleGameLayer::setupHUD()
     verts[1] = Vec2(0,_scoreLabel->getContentSize().height);
     verts[2] = Vec2(visibleSize.width*2, _scoreLabel->getContentSize().height);
     verts[3] = Vec2(visibleSize.width*2,0);
-    bgBar2->drawSolidPoly(verts, 4, Color4F(0x74/255.0, 0x74/255.0, 0xFF/255.0, 1.0f));
+    bgBar2->drawSolidPoly(verts, 4, Color4F(0x6E/255.0, 0x83/255.0, 0xF2/255.0, 1.0f));
     addChild(bgBar2);
     
     spacing += _scoreLabel->getContentSize().height;
     
-    _levelLabel = Label::createWithTTF(ttfConfig, "LEVEL: 01");
+    _levelLabel = Label::createWithTTF(ttfConfig, "LEVEL: 1");
     _levelLabel->setTextColor(Color4B(0xE9, 0xE9, 0xE9, 0xFF));
-    _levelLabel->setAnchorPoint(Vec2(0.5,0.5));
-    _levelLabel->setPosition(Vec2(_levelLabel->getContentSize().width / 2 + visibleSize.width / 30, 
+    //_levelLabel->setAnchorPoint(Vec2(0.5,0.5));
+    _levelLabel->setAnchorPoint(Vec2(0,0.5));
+    _levelLabel->setAlignment(TextHAlignment::LEFT);
+    _levelLabel->setPosition(Vec2(visibleSize.width / 30, 
                                 spacing));
     
     addChild(_levelLabel, 1);
@@ -165,7 +169,7 @@ void SimpleGameLayer::setupHUD()
     verts[1] = Vec2(0,_levelLabel->getContentSize().height);
     verts[2] = Vec2(visibleSize.width*2, _levelLabel->getContentSize().height);
     verts[3] = Vec2(visibleSize.width*2,0);
-    bgBar3->drawSolidPoly(verts, 4, Color4F(0x74/255.0, 0x74/255.0, 0xFF/255.0, 1.0f));
+    bgBar3->drawSolidPoly(verts, 4, Color4F(0x6E/255.0, 0x83/255.0, 0xF2/255.0, 1.0f));
     addChild(bgBar3);
 }
 
@@ -303,8 +307,11 @@ void SimpleGameLayer::buildSquareBoard()
                     // take life
                     
                     if ( _lives.empty() == false )  {
-                        auto life = (Sprite*) getChildByName( _lives.top() );
+                        std::string top = _lives.top();
+                        auto life = (Sprite*) getChildByName( top );
                         _lives.pop();
+                        
+                        log("Pop life %s", top.c_str());
                     
                         auto fadeOut = FadeOut::create(0.2);
                         auto callback = CallFunc::create([=](){
@@ -373,10 +380,10 @@ void SimpleGameLayer::buildSquareBoard()
                             life->runAction(fadeIn);
                 
                             std::stringstream stream;
-                            stream << "life-" << index;
+                            stream << "life-" << (index+1);
                             life->setName( stream.str() );
                             
-                            log("Added life %s", stream.str().c_str());
+                            log("Push life %s", stream.str().c_str());
                 
                             _lives.push( stream.str() );
                         }
