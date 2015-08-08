@@ -95,15 +95,15 @@ void SimpleGameLayer::setupHUD()
     
     spacing += _scoreLabel->getContentSize().height;
     
-    auto levelLabel = Label::createWithTTF(ttfConfig, "LEVEL: 01");
-    levelLabel->setColor(Color3B(0x74, 0x74, 0x74));
-    levelLabel->setAnchorPoint(Vec2(0,1));
-    levelLabel->setPosition(Vec2(SPACING, 
+    _levelLabel = Label::createWithTTF(ttfConfig, "LEVEL: 01");
+    _levelLabel->setColor(Color3B(0x74, 0x74, 0x74));
+    _levelLabel->setAnchorPoint(Vec2(0,1));
+    _levelLabel->setPosition(Vec2(SPACING, 
                                 spacing));
     
     setName("Layer");
     
-    addChild(levelLabel);
+    addChild(_levelLabel);
 }
 
 void SimpleGameLayer::setupGame()
@@ -166,9 +166,9 @@ void SimpleGameLayer::buildSquareBoard()
     
     // [[-- De acordo com o número de colunas e linhas, pre-calcula o tamanho dos tiles
     
-    v_spacing -= _labelTime->getContentSize().height/1.5;
     int pre_calc_square_size = (Director::getInstance()->getVisibleSize().width - (_columns+1)*SPACING) / _columns;
-    
+    v_spacing -= (Director::getInstance()->getVisibleSize().height - _lines*(pre_calc_square_size+SPACING) - 2*SPACING - (pre_calc_square_size)/2) / 2;
+   
     // --]]
     
     // [[-- Registra TouchListener
@@ -232,9 +232,9 @@ void SimpleGameLayer::buildSquareBoard()
                 if ( target->getZOrder() == 3 ) { // touched correct tile
                     _hiddenCorrectTilesLeft.remove( target->getName() ); // removes the correct tile
                     _totalCorrect+=1;
-                    _score += (_totalCorrect * _level) / (_secs ? _secs : 1);
+                    _score += ((_totalCorrect * _level)*3) / (_secs ? _secs : 1);
                 } else { // touched wrong tile
-                    _score -= ((_totalTries - _totalCorrect) * _level) * (_secs ? _secs : 1);
+                    _score -= ((_totalTries - _totalCorrect) * _level) * ((_secs/3) ? (_secs/3) : 1);
                 }
                 
                 std::stringstream stream;
@@ -438,6 +438,11 @@ void SimpleGameLayer::prepareForNextLevel()
     
     if ( _correctSets >= TO_NEXT_LEVEL ) {
         _level += 1;
+        
+        std::stringstream stream;
+        stream << "LEVEL: " << _level;
+        _levelLabel->setString(stream.str());
+        
         _lines += 1;
         _columns += 1;
         _correctSets = 0;

@@ -24,7 +24,7 @@ private:
     std::list<int> _targets;
     Timer _timer;
     int _secs, _mins;
-    cocos2d::Label *_labelTime, *_scoreLabel;
+    cocos2d::Label *_labelTime, *_scoreLabel, *_levelLabel;
 public: 
     SimpleGameLayer();
     virtual ~SimpleGameLayer();
