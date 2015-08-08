@@ -6,6 +6,7 @@
 #include "Timer.h"
 #include <sstream>
 #include <list>
+#include <stack>
 #include <random>
 #include <algorithm>
 
@@ -14,12 +15,19 @@ class SimpleGameLayer : public cocos2d::LayerColor
 private:
     const int SPACING = 10;
     const int TO_NEXT_LEVEL = 10; // amounth of correct sets needed level up
+    const int MAX_LIVES = 5;
+    
+    bool _isFirstTilesSet; // if the current set is the first
+    
     std::list< std::string > _hiddenCorrectTilesLeft;
+    std::stack< std::string > _lives;
+    
     int _correctSets;
 
     int _currentTouchID; // register first touch id, used to prevent multitouch
-    bool _running = false;
+    bool _running, _over;
     int _level, _lines, _columns, _cubics, _score;
+    float _life_square_scale_ratio;
     int _totalTries, _totalCorrect;
     std::list<int> _targets;
     Timer _timer;

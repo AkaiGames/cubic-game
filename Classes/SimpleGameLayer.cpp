@@ -95,6 +95,32 @@ void SimpleGameLayer::setupHUD()
     
     // --]]
     
+    // [[-- Create 'life tiles'
+    
+    h_spacing = visibleSize.width - (visibleSize.width / 30)*2;
+    _life_square_scale_ratio = (bgBar1->getContentSize().height / 4) / bgBar1->getContentSize().height;
+    
+    for( int i = MAX_LIVES; i > 0; i-- ) {
+        auto life = Sprite::create("tile-bg.png");
+        life->setOpacity(0);
+        life->setScale( _life_square_scale_ratio );
+        life->setPosition( Vec2( h_spacing, v_spacing ) );
+        addChild(life, 1);
+        
+        auto fadeIn = FadeIn::create(0.2f);
+        life->runAction(fadeIn);
+        
+        std::stringstream stream;
+        stream << "life-" << i;
+        life->setName( stream.str() );
+        
+        _lives.push( stream.str() );
+        
+        h_spacing -= (life->getBoundingBox().size.width + (visibleSize.width / 30));
+    }
+    
+    // --]]
+    
     _scoreLabel = Label::createWithTTF(ttfConfig,"SCORE: 0");
     
     int spacing = _scoreLabel->getBoundingBox().size.height/2;
@@ -146,7 +172,8 @@ void SimpleGameLayer::setupHUD()
 void SimpleGameLayer::setupGame()
 {
     _secs = _mins = 0;
-    _running = false;
+    _running = _over = false;
+    _isFirstTilesSet = true;
     _level = 1;
     _lines = 4;
     _columns = 3;
@@ -213,7 +240,7 @@ void SimpleGameLayer::buildSquareBoard()
     auto touchListener = EventListenerTouchOneByOne::create();
     touchListener->setSwallowTouches( true );
     touchListener->onTouchBegan = [=](Touch* touch, Event* event) {
-        if ( _running == false ) return false;
+        if ( _over == true || _running == false ) return false;
         
         // we've already spent all our tries.
         if ( _totalTries >= _cubics ) {
@@ -272,6 +299,46 @@ void SimpleGameLayer::buildSquareBoard()
                     _score += ((_totalCorrect * _level)*3) / (_secs ? _secs : 1);
                 } else { // touched wrong tile
                     _score -= ((_totalTries - _totalCorrect) * _level) * ((_secs/3) ? (_secs/3) : 1);
+                    
+                    // take life
+                    
+                    if ( _lives.empty() == false )  {
+                        auto life = (Sprite*) getChildByName( _lives.top() );
+                        _lives.pop();
+                    
+                        auto fadeOut = FadeOut::create(0.2);
+                        auto callback = CallFunc::create([=](){
+                            life->removeFromParentAndCleanup(true);
+                        });
+                        auto seq = Sequence::create(fadeOut, callback, nullptr);
+                        
+                        life->runAction(seq);
+                    } 
+                    else  { // game over
+                        _running = false;
+                        _over = true;
+                        
+                        auto visibleSize = Director::getInstance()->getVisibleSize();
+                        auto origin = Director::getInstance()->getVisibleOrigin();
+                        
+                        auto gameOverLabel = Label::createWithTTF("GAME OVER", "fonts/monofonto.ttf", 
+                                                                  visibleSize.width / 5);
+                        gameOverLabel->setAnchorPoint( Vec2(0.5,0.5) );
+                        gameOverLabel->setColor( Color3B(0x22, 0x22, 0x22) );
+                        gameOverLabel->setOpacity(0);
+                        
+                        gameOverLabel->setPosition(Vec2(origin.x + visibleSize.width/2,
+                            origin.y + visibleSize.height/2) );
+                        
+                        auto fadeIn = FadeIn::create(0.5f);
+                        auto fadeOut = FadeOut::create(0.5f);
+                        auto seq = Sequence::create(fadeIn, fadeOut, nullptr);
+                        auto repeat = RepeatForever::create(seq);
+                        
+                        gameOverLabel->runAction(repeat);
+                        
+                        addChild(gameOverLabel, 777);
+                    }
                 }
                 
                 std::stringstream stream;
@@ -285,6 +352,34 @@ void SimpleGameLayer::buildSquareBoard()
                     
                     if ( _totalCorrect == _totalTries ) { // perfect
                         _correctSets += 1;
+                        
+                        // if max lives not reached, you recover one life
+                        
+                        if ( _lives.size() < MAX_LIVES ) {
+                            int index = _lives.size();
+                            
+                            auto life = Sprite::create("tile-bg.png"); life->setScale( _life_square_scale_ratio );
+                            
+                            auto visibleSize = Director::getInstance()->getVisibleSize();
+                            
+                            int h_offset = visibleSize.width - (visibleSize.width / 30)*2;
+                            h_offset -= (index * (life->getBoundingBox().size.width + (visibleSize.width / 30)) ); 
+                            
+                            life->setOpacity(0);
+                            life->setPosition( Vec2( h_offset, _labelTime->getPositionY() ) );
+                            addChild(life, 1);
+                            
+                            auto fadeIn = FadeIn::create(0.2f);
+                            life->runAction(fadeIn);
+                
+                            std::stringstream stream;
+                            stream << "life-" << index;
+                            life->setName( stream.str() );
+                            
+                            log("Added life %s", stream.str().c_str());
+                
+                            _lives.push( stream.str() );
+                        }
                     }
                     
                     _running = false;
@@ -326,6 +421,7 @@ void SimpleGameLayer::buildSquareBoard()
                     auto waitPreviousDelay = DelayTime::create(3.f);
                     auto fade2 = FadeOut::create(1.0f);
                     auto nextSetCallback = CallFunc::create([=](){
+                        if ( _over == true ) return;
                         log("Removing..");
                         label->removeFromParentAndCleanup(true);
                         log("Preparing..");
