@@ -54,56 +54,93 @@ void SimpleGameLayer::setupHUD()
     Size visibleSize = Director::getInstance()->getVisibleSize();
     
     auto clockSprite = Sprite::create("alarm-clock.png");
-    clockSprite->setAnchorPoint(Vec2(0.5,0.5));
     clockSprite->setScale(0.6);
-    clockSprite->setOpacity(120);
-    clockSprite->setPosition(Vec2(clockSprite->getBoundingBox().size.width/2, 
-                                visibleSize.height - clockSprite->getBoundingBox().size.height/1.5));
-    addChild(clockSprite);
+    
+    float v_spacing = visibleSize.height - clockSprite->getBoundingBox().size.height/2 - (visibleSize.width / 80)*2;
+    float h_spacing = clockSprite->getBoundingBox().size.width/2 + (visibleSize.width / 30);
+    
+    clockSprite->setAnchorPoint(Vec2(0.5,0.5));
+    clockSprite->setPosition(Vec2(h_spacing, v_spacing));
+    
+    addChild(clockSprite, 1);
     
     TTFConfig ttfConfig("fonts/larabiefontrg.ttf", visibleSize.width/12);
 
     _labelTime = Label::createWithTTF(ttfConfig,"00:00");
-    _labelTime->setColor(Color3B(0x74, 0x74, 0x74));
+    _labelTime->setTextColor(Color4B(0xE9, 0xE9, 0xE9, 0xFF));
     _labelTime->setAnchorPoint(Vec2(0.5,0.5));
     
-    float v_spacing = visibleSize.height - _labelTime->getContentSize().height/1.5;
+    h_spacing += _labelTime->getContentSize().width / 2 + h_spacing;
     
-    _labelTime->setPosition(Vec2(_labelTime->getContentSize().width / 1.5 + clockSprite->getBoundingBox().size.width/2 + 10, 
-                                v_spacing));
+    _labelTime->setPosition(Vec2(h_spacing, v_spacing));
     _labelTime->retain();
     
-    addChild(_labelTime);
+    addChild(_labelTime, 1);
     
-    int spacing = 0;
+    // [[-- Background bar 1
+    
+    Vec2 verts[4];
+    
+    auto bgBar1 = DrawNode::create();
+    bgBar1->setContentSize( Size(visibleSize.width*2, _labelTime->getContentSize().height * 1.2) );
+    bgBar1->setAnchorPoint( Vec2(0.5,0.5) );
+    bgBar1->setPosition( _labelTime->getPositionX(), _labelTime->getPositionY() ); 
+    bgBar1->clear();
+    verts[0] = Vec2(0,0);
+    verts[1] = Vec2(0,_labelTime->getContentSize().height * 1.5);
+    verts[2] = Vec2(visibleSize.width*2, _labelTime->getContentSize().height * 1.5);
+    verts[3] = Vec2(visibleSize.width*2,0);
+    bgBar1->drawSolidPoly(verts, 4, Color4F(0x74/255.0, 0x74/255.0, 0xFF/255.0, 1.0f));
+    addChild(bgBar1);
+    
+    // --]]
     
     _scoreLabel = Label::createWithTTF(ttfConfig,"SCORE: 0");
-    _scoreLabel->setColor(Color3B(0x74, 0x74, 0x74));
-    _scoreLabel->setAnchorPoint(Vec2(0,1));
-    _scoreLabel->setPosition(Vec2(SPACING, 
-                                v_spacing));
-    spacing = _scoreLabel->getBoundingBox().size.height/2 + visibleSize.height / 20.0;
     
-    v_spacing = _scoreLabel->getContentSize().height/1.5;
+    int spacing = _scoreLabel->getBoundingBox().size.height/2;
     
-    _scoreLabel->setPosition(Vec2(SPACING, 
-                                 spacing));
+    _scoreLabel->setTextColor(Color4B(0xE9, 0xE9, 0xE9, 0xFF));
+    _scoreLabel->setAnchorPoint(Vec2(0.5,0.5));
+    _scoreLabel->setPosition(Vec2(_scoreLabel->getContentSize().width / 2 + visibleSize.width / 30, 
+                                spacing));
     
     _scoreLabel->retain();
     
-    addChild(_scoreLabel);
+    addChild(_scoreLabel, 1);
+    
+    auto bgBar2 = DrawNode::create();
+    bgBar2->setContentSize( Size(visibleSize.width*2, _scoreLabel->getContentSize().height) );
+    bgBar2->setAnchorPoint( Vec2(0.5,0.5) );
+    bgBar2->setPosition( _scoreLabel->getPositionX(), _scoreLabel->getPositionY() ); 
+    bgBar2->clear();
+    verts[0] = Vec2(0,0);
+    verts[1] = Vec2(0,_scoreLabel->getContentSize().height);
+    verts[2] = Vec2(visibleSize.width*2, _scoreLabel->getContentSize().height);
+    verts[3] = Vec2(visibleSize.width*2,0);
+    bgBar2->drawSolidPoly(verts, 4, Color4F(0x74/255.0, 0x74/255.0, 0xFF/255.0, 1.0f));
+    addChild(bgBar2);
     
     spacing += _scoreLabel->getContentSize().height;
     
     _levelLabel = Label::createWithTTF(ttfConfig, "LEVEL: 01");
-    _levelLabel->setColor(Color3B(0x74, 0x74, 0x74));
-    _levelLabel->setAnchorPoint(Vec2(0,1));
-    _levelLabel->setPosition(Vec2(SPACING, 
+    _levelLabel->setTextColor(Color4B(0xE9, 0xE9, 0xE9, 0xFF));
+    _levelLabel->setAnchorPoint(Vec2(0.5,0.5));
+    _levelLabel->setPosition(Vec2(_levelLabel->getContentSize().width / 2 + visibleSize.width / 30, 
                                 spacing));
     
-    setName("Layer");
+    addChild(_levelLabel, 1);
     
-    addChild(_levelLabel);
+    auto bgBar3 = DrawNode::create();
+    bgBar3->setContentSize( Size(visibleSize.width*2, _levelLabel->getContentSize().height) );
+    bgBar3->setAnchorPoint( Vec2(0.5,0.5) );
+    bgBar3->setPosition( _levelLabel->getPositionX(), _levelLabel->getPositionY() ); 
+    bgBar3->clear();
+    verts[0] = Vec2(0,0);
+    verts[1] = Vec2(0,_levelLabel->getContentSize().height);
+    verts[2] = Vec2(visibleSize.width*2, _levelLabel->getContentSize().height);
+    verts[3] = Vec2(visibleSize.width*2,0);
+    bgBar3->drawSolidPoly(verts, 4, Color4F(0x74/255.0, 0x74/255.0, 0xFF/255.0, 1.0f));
+    addChild(bgBar3);
 }
 
 void SimpleGameLayer::setupGame()
