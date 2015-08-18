@@ -34,47 +34,37 @@ std::string CurlWrapper::get(std::string uri)
     struct MemoryStruct chunk;
     
     chunk.memory = (char*)malloc(1);  /* will be grown as needed by the realloc above */
-    log("FOO1");
     chunk.size = 0;    /* no data at this point */
 
     curl = curl_easy_init();
     
-    log("FOO2");
-    
     if (curl) 
-    {
-        log("FOO3");
-        curl_easy_setopt(curl, CURLOPT_URL, uri.c_str());
-        log("FOO4");
-        //code from http://curl.haxx.se/libcurl/c/getinmemory.html
-        /* we pass our 'chunk' struct to the callback function */
-        curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&chunk);
-        log("FOO5");
-        //If we don't provide a write function for curl, it will recieve error code 23 on windows.
-        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteMemoryCallback);
-        log("FOO6");
+    { 
+        curl_easy_setopt(curl, CURLOPT_URL, uri.c_str()); 
+        //code from http://curl.haxx.se/libcurl/c/getinmemory.html 
+        /* we pass our 'chunk' struct to the callback function */ 
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&chunk); 
+        //If we don't provide a write function for curl, it will recieve error code 23 on windows. 
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteMemoryCallback); 
 
-        res = curl_easy_perform(curl);
-        log("FOO7");
-        /* always cleanup */
-        curl_easy_cleanup(curl);
-        log("FOO8");
-        if (res == 0)
-        {
-            log("FOO9");
-            //lblResult->setString(StringUtils::format("Connect successfully!\n%s", stream.str().c_str()));
-            result << chunk.memory;
-        }
-        else
-        {
-            result << "code: " << res;
-        }
+        res = curl_easy_perform(curl); 
+        /* always cleanup */ 
+        curl_easy_cleanup(curl); 
+        
+        if (res == 0) 
+        { 
+            result << chunk.memory; 
+        } 
+        else 
+        { 
+            result << "error: " << res; 
+        } 
     } 
     else 
-    {
-        result << "no curl";
+    { 
+        result << "no curl"; 
     } 
     
-    return result.str();
+    return result.str(); 
 }
 

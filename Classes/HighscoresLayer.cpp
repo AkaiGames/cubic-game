@@ -1,8 +1,14 @@
 #include "HighscoresLayer.h"
 #include "MenuLayer.h"
 #include "CurlWrapper.h"
+// rapidjson
+#include "../external/rapidjson/document.h"
+#include "../external/rapidjson/writer.h"
+#include "../external/rapidjson/stringbuffer.h"
 
 USING_NS_CC;
+
+using namespace rapidjson;
 
 cocos2d::Label* lblResult;
 
@@ -26,8 +32,19 @@ void clickCallback(Ref *sender )
     std::string response = CurlWrapper::get("http://httpbin.org/ip");
     std::stringstream stream;
     stream << "Response: " << response;
-    lblResult->setString(stream.str());
-    log("Result: %s", stream.str().c_str());
+    
+    Document document;
+    document.Parse(response.c_str());
+    
+    if ( document.IsObject() ) {
+        lblResult->setString(document["origin"].GetString());
+        log("Your IP is: %s", document["origin"].GetString());
+    } else {
+        lblResult->setString(response);
+        log("Result: %s", response.c_str());
+    }
+    
+    
 }
 
 // on "init" you need to initialize your instance
