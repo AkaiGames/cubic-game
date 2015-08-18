@@ -33,6 +33,7 @@ set(COCOS2D_ROOT ${CMAKE_SOURCE_DIR}/cocos2d)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${COCOS2D_ROOT}/cmake/Modules/")
 include(CocosBuildHelpers)
 
+
 # libcocos2d
 set(BUILD_CPP_TESTS OFF CACHE BOOL "turn off build cpp-tests")
 set(BUILD_LUA_LIBS OFF CACHE BOOL "turn off build lua-tests")
@@ -117,6 +118,8 @@ set(GAME_SRC
   Classes/AppDelegate.cpp
   Classes/MenuLayer.cpp
   Classes/SimpleGameLayer.cpp
+  Classes/HighscoresLayer.cpp
+  Classes/CurlWrapper.cpp
   Classes/Timer.cpp
   ${PLATFORM_SPECIFIC_SRC}
 )
@@ -125,6 +128,8 @@ set(GAME_HEADERS
   Classes/AppDelegate.h
   Classes/MenuLayer.h
   Classes/SimpleGameLayer.h
+  Classes/HighscoresLayer.h
+  Classes/CurlWrapper.h
   Classes/Timer.h
   ${PLATFORM_SPECIFIC_HEADERS}
 )
@@ -141,6 +146,7 @@ set(APP_BIN_DIR "${CMAKE_BINARY_DIR}/bin")
 
 set_target_properties(${APP_NAME} PROPERTIES
      RUNTIME_OUTPUT_DIRECTORY  "${APP_BIN_DIR}")
+
 
 if ( WIN32 )
   #also copying dlls to binary directory for the executable to run

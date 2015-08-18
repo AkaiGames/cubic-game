@@ -1,5 +1,6 @@
 #include "MenuLayer.h"
 #include "SimpleGameLayer.h"
+#include "HighscoresLayer.h"
 
 USING_NS_CC;
 
@@ -26,7 +27,8 @@ void mode1_callback(Ref *sender )
 
 void mode2_callback(Ref *sender )
 {
-    log("Not implemented yet..");
+    auto scene = HighscoresLayer::createScene();
+    Director::getInstance()->replaceScene(scene);
 }
 
 void mode3_callback(Ref *sender )
