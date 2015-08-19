@@ -10,6 +10,7 @@ USING_NS_CC;
 class CurlWrapper {
 public:
     static std::string get(std::string uri);
+    static std::string post(std::string uri, std::string params);
 };
 
 #endif

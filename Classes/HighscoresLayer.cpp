@@ -29,7 +29,7 @@ Scene* HighscoresLayer::createScene()
 
 void clickCallback(Ref *sender )
 {
-    std::string response = CurlWrapper::get("http://httpbin.org/ip");
+    std::string response = CurlWrapper::post("http://httpbin.org/post", "name=foo&project=cubic");
     std::stringstream stream;
     stream << "Response: " << response;
     
@@ -37,13 +37,9 @@ void clickCallback(Ref *sender )
     document.Parse(response.c_str());
     
     if ( document.IsObject() ) {
-        lblResult->setString(document["origin"].GetString());
-        log("Your IP is: %s", document["origin"].GetString());
-    } else {
         lblResult->setString(response);
         log("Result: %s", response.c_str());
     }
-    
     
 }
 
